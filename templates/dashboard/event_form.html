@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action_title }} - EventPulse{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-4 mb-4" style="background: var(--gradient-dark)!important;">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small text-white-50 mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'organizer_dashboard' %}" class="text-white-50">Organizer Hub</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">{{ action_title }}</li>
+            </ol>
+        </nav>
+        <h1 class="h3 fw-bold mb-0">{{ action_title }}</h1>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <form method="POST" enctype="multipart/form-data" id="eventCreateEditForm">
+                {% csrf_token %}
+
+                <!-- SECTION 1: BASIC DETAILS -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-info-circle me-2"></i> 1. Basic Information</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Event Title *</label>
+                            {{ form.title }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Category</label>
+                            {{ form.category }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Tags (Comma-separated)</label>
+                            {{ form.tags }}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Short Hook / Summary (max 300 chars) *</label>
+                            {{ form.short_description }}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Full Detailed Description *</label>
+                            {{ form.description }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: DATE & TIME -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-calendar-event me-2"></i> 2. Date & Schedule</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Start Date & Time *</label>
+                            {{ form.start_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">End Date & Time *</label>
+                            {{ form.end_date }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: FORMAT & VENUE -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-geo-alt me-2"></i> 3. Format & Venue Location</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Event Format</label>
+                            {{ form.format }}
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Venue Name / Facility</label>
+                            {{ form.venue_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Street Address</label>
+                            {{ form.address }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">City / State</label>
+                            {{ form.city }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Online Stream / Video Meeting URL (For Virtual & Hybrid)</label>
+                            {{ form.online_meeting_url }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: BANNER MEDIA -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-image me-2"></i> 4. Event Banner Media</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Banner Image URL (Unsplash or web link)</label>
+                            {{ form.banner_url }}
+                            <div class="form-text small">Enter a high-resolution image URL or upload below.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Or Upload File</label>
+                            {{ form.banner_image }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 5: TICKET TIERS CONFIGURATION -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-ticket-perforated me-2"></i> 5. Ticket Tiers & Pricing</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addTicketTierRow()">
+                            <i class="bi bi-plus-circle me-1"></i> Add Another Tier
+                        </button>
+                    </div>
+                    <p class="small text-muted mb-3">Create tiers like Free Entry, General Admission, VIP Pass, or Early Bird.</p>
+
+                    <div id="ticketTiersContainer">
+                        {% if is_edit and ticket_tiers %}
+                            {% for tier in ticket_tiers %}
+                            <div class="p-3 bg-light rounded-3 border mb-3 tier-row">
+                                <input type="hidden" name="tier_id[]" value="{{ tier.id }}">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Tier Name</label>
+                                        <input type="text" name="tier_name[]" value="{{ tier.name }}" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold">Price ($)</label>
+                                        <input type="number" step="0.01" min="0" name="tier_price[]" value="{{ tier.price }}" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold">Capacity</label>
+                                        <input type="number" min="1" name="tier_capacity[]" value="{{ tier.capacity }}" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Perks (comma-separated)</label>
+                                        <input type="text" name="tier_perks[]" value="{{ tier.perks }}" class="form-control form-control-sm" placeholder="Free lunch, Swag bag">
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <label class="form-label small fw-bold invisible d-block">Del</label>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.tier-row').remove()"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Default Initial Tier -->
+                            <div class="p-3 bg-light rounded-3 border mb-3 tier-row">
+                                <input type="hidden" name="tier_id[]" value="">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Tier Name</label>
+                                        <input type="text" name="tier_name[]" value="General Admission" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold">Price ($)</label>
+                                        <input type="number" step="0.01" min="0" name="tier_price[]" value="0.00" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold">Capacity</label>
+                                        <input type="number" min="1" name="tier_capacity[]" value="100" class="form-control form-control-sm" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Perks (comma-separated)</label>
+                                        <input type="text" name="tier_perks[]" value="Full access to sessions" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <label class="form-label small fw-bold invisible d-block">Del</label>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.tier-row').remove()"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- SECTION 6: AGENDA, SPEAKERS & FAQS -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-list-stars me-2"></i> 6. Schedule, Speakers & FAQs</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Event Agenda / Timeline</label>
+                            {{ form.agenda }}
+                            <div class="form-text small">Format: <code>Time | Title | Description</code> per line</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Featured Speakers / Performers</label>
+                            {{ form.speakers }}
+                            <div class="form-text small">Format: <code>Speaker Name | Role / Company</code> per line</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Frequently Asked Questions / Policies</label>
+                            {{ form.faqs }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 7: STATUS & PUBLICATION -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-toggle-on me-2"></i> 7. Status & Visibility</h5>
+                    
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Publication Status</label>
+                            {{ form.status }}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-3">
+                                {{ form.is_featured }}
+                                <label class="form-check-label fw-bold small" for="id_is_featured">
+                                    Highlight as Featured Event on Homepage
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBMIT ACTIONS -->
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'organizer_dashboard' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+                    <button type="submit" class="btn btn-gradient-primary px-5 fw-bold">
+                        <i class="bi bi-check2-circle me-1"></i> Save & Publish Event
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function addTicketTierRow() {
+    const container = document.getElementById('ticketTiersContainer');
+    const newRow = document.createElement('div');
+    newRow.className = 'p-3 bg-light rounded-3 border mb-3 tier-row';
+    newRow.innerHTML = `
+        <input type="hidden" name="tier_id[]" value="">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Tier Name</label>
+                <input type="text" name="tier_name[]" placeholder="VIP Pass / Workshop Access" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Price ($)</label>
+                <input type="number" step="0.01" min="0" name="tier_price[]" value="49.00" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Capacity</label>
+                <input type="number" min="1" name="tier_capacity[]" value="50" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold">Perks (comma-separated)</label>
+                <input type="text" name="tier_perks[]" placeholder="VIP seating, lunch, recordings" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-1 text-end">
+                <label class="form-label small fw-bold invisible d-block">Del</label>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.tier-row').remove()"><i class="bi bi-trash"></i></button>
+            </div>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+</script>
+{% endblock %}

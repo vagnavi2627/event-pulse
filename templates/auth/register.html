@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create an Account - EventPulse{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card" style="max-width: 540px;">
+        <div class="auth-header">
+            <span class="navbar-brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.4rem;">
+                <i class="bi bi-ticket-perforated-fill"></i>
+            </span>
+            <h3 class="fw-bold mb-1">Create an Account</h3>
+            <p class="text-muted small">Join thousands of event creators and passionate attendees</p>
+        </div>
+
+        <form method="POST" action="{% url 'register' %}">
+            {% csrf_token %}
+
+            <!-- Role Switch Tabs -->
+            <div class="auth-role-switch mb-4">
+                <div class="auth-role-btn active" id="btnRoleAttendee" onclick="setRole('attendee')">
+                    <i class="bi bi-person me-1"></i> I'm an Attendee
+                </div>
+                <div class="auth-role-btn" id="btnRoleOrganizer" onclick="setRole('organizer')">
+                    <i class="bi bi-megaphone me-1"></i> I'm an Organizer
+                </div>
+            </div>
+            <input type="hidden" name="role" id="selectedRoleInput" value="attendee">
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Username</label>
+                    {{ form.username }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-bold">Email Address</label>
+                    {{ form.email }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Phone Number</label>
+                    {{ form.phone }}
+                </div>
+                <div class="col-md-6" id="orgNameContainer" style="display: none;">
+                    <label class="form-label small fw-bold">Organization / Company</label>
+                    {{ form.organization_name }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Password</label>
+                    {{ form.password }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Confirm Password</label>
+                    {{ form.confirm_password }}
+                </div>
+            </div>
+
+            {% if form.errors %}
+            <div class="alert alert-danger p-2 small mt-3">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <div>{{ field.label }}: {{ error }}</div>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-check my-3 small text-muted">
+                <input class="form-check-input" type="checkbox" id="termsCheck" required checked>
+                <label class="form-check-label" for="termsCheck">
+                    I agree to the <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-gradient-primary w-100 py-2 fw-bold mb-3">
+                <i class="bi bi-person-check-fill me-1"></i> Register Account
+            </button>
+        </form>
+
+        <div class="text-center small text-muted">
+            Already have an account? 
+            <a href="{% url 'login' %}" class="fw-bold text-primary">Sign In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function setRole(role) {
+    document.getElementById('selectedRoleInput').value = role;
+    const btnAttendee = document.getElementById('btnRoleAttendee');
+    const btnOrganizer = document.getElementById('btnRoleOrganizer');
+    const orgContainer = document.getElementById('orgNameContainer');
+
+    if (role === 'organizer') {
+        btnOrganizer.classList.add('active');
+        btnAttendee.classList.remove('active');
+        orgContainer.style.display = 'block';
+    } else {
+        btnAttendee.classList.add('active');
+        btnOrganizer.classList.remove('active');
+        orgContainer.style.display = 'none';
+    }
+}
+
+// Read URL param if role passed
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('role') === 'organizer') {
+    setRole('organizer');
+}
+</script>
+{% endblock %}

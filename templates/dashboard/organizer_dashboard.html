@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Organizer Hub - EventPulse{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-4" style="background: var(--gradient-dark)!important;">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <span class="badge bg-warning text-dark fw-bold px-3 py-1 rounded-pill mb-1">
+                    <i class="bi bi-speedometer2 me-1"></i> Organizer Hub
+                </span>
+                <h1 class="h3 fw-bold mb-0">Event Management Dashboard</h1>
+                <p class="text-white-50 small mb-0">Manage your events, monitor ticket sales velocity, and download attendee rosters</p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports_analytics' %}" class="btn btn-glass btn-sm">
+                    <i class="bi bi-graph-up me-1"></i> Sales Analytics
+                </a>
+                <a href="{% url 'create_event' %}" class="btn btn-gradient-primary btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i> Create New Event
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- ORGANIZER KPI CARDS -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-title">Total Events</div>
+                    <div class="kpi-value">{{ total_events }}</div>
+                    <div class="kpi-trend text-success"><i class="bi bi-arrow-up-right"></i> {{ published_events }} published</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-purple">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-title">Tickets Sold</div>
+                    <div class="kpi-value text-primary">{{ total_tickets }}</div>
+                    <div class="kpi-trend text-muted">Across all your events</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-blue">
+                    <i class="bi bi-ticket-detailed"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-title">Gross Revenue</div>
+                    <div class="kpi-value text-success">${{ total_revenue|floatformat:2 }}</div>
+                    <div class="kpi-trend text-success"><i class="bi bi-check2"></i> Confirmed bookings</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-green">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-title">Total Attendees</div>
+                    <div class="kpi-value text-info">{{ unique_attendees }}</div>
+                    <div class="kpi-trend text-muted">Unique customer profiles</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-amber">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN EVENT MANAGEMENT TABLE -->
+    <div class="custom-table-card">
+        <div class="p-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+            <h5 class="fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i> Your Managed Events</h5>
+            <div class="d-flex gap-2">
+                <a href="{% url 'export_sales_csv' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download me-1"></i> Export Sales CSV
+                </a>
+                <a href="{% url 'create_event' %}" class="btn btn-sm btn-gradient-primary">
+                    <i class="bi bi-plus me-1"></i> Add Event
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table custom-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Category</th>
+                        <th>Date & Time</th>
+                        <th>Capacity & Sales</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ev in user_events %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="{{ ev.display_banner }}" alt="{{ ev.title }}" class="rounded-3 border" width="56" height="42" style="object-fit:cover;">
+                                <div>
+                                    <h6 class="fw-bold mb-0">
+                                        <a href="{% url 'event_detail' ev.slug %}" class="text-dark">{{ ev.title }}</a>
+                                    </h6>
+                                    <div class="small text-muted">{{ ev.venue_name|default:ev.city|default:"Online" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ ev.category.name|default:"General" }}</span>
+                        </td>
+                        <td>
+                            <div class="small fw-semibold">{{ ev.start_date|date:"M d, Y" }}</div>
+                            <div class="text-muted" style="font-size:0.75rem;">{{ ev.start_date|date:"h:i A" }}</div>
+                        </td>
+                        <td style="min-width: 170px;">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>{{ ev.total_tickets_sold }} sold</span>
+                                <span>{{ ev.total_capacity }} max</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {% if ev.total_capacity > 0 %}{% widthratio ev.total_tickets_sold ev.total_capacity 100 %}{% else %}0{% endif %}%;"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-status {{ ev.status }}">{{ ev.status|capfirst }}</span>
+                            {% if ev.is_featured %}<span class="badge bg-warning text-dark small ms-1">Featured</span>{% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <a href="{% url 'event_detail' ev.slug %}" class="btn btn-sm btn-outline-secondary" title="View Public Page">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'event_attendees' ev.id %}" class="btn btn-sm btn-outline-info" title="Attendee List">
+                                    <i class="bi bi-people"></i>
+                                </a>
+                                <a href="{% url 'edit_event' ev.id %}" class="btn btn-sm btn-outline-primary" title="Edit Event">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'delete_event' ev.id %}" class="btn btn-sm btn-outline-danger" title="Delete Event">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="py-4">
+                                <i class="bi bi-calendar-plus text-muted display-5 mb-3 d-block"></i>
+                                <h5 class="fw-bold">You Haven't Created Any Events Yet</h5>
+                                <p class="text-muted">Launch your first conference, workshop, concert or meetup now!</p>
+                                <a href="{% url 'create_event' %}" class="btn btn-gradient-primary mt-2">
+                                    <i class="bi bi-plus-circle me-1"></i> Create First Event
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RECENT BOOKINGS & SALES FEED -->
+    <div class="custom-table-card mt-4">
+        <div class="p-3 border-bottom">
+            <h5 class="fw-bold mb-0"><i class="bi bi-receipt-cutoff text-success me-2"></i> Recent Ticket Orders</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table custom-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Event</th>
+                        <th>Customer</th>
+                        <th>Tickets</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in recent_sales %}
+                    <tr>
+                        <td class="font-monospace fw-bold text-primary">{{ sale.booking_reference }}</td>
+                        <td>{{ sale.event.title }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ sale.attendee_name }}</div>
+                            <div class="small text-muted">{{ sale.attendee_email }}</div>
+                        </td>
+                        <td>
+                            {% with item=sale.items.first %}
+                            <span class="badge bg-light text-dark border">{{ item.ticket_tier.name }} (x{{ item.quantity }})</span>
+                            {% endwith %}
+                        </td>
+                        <td class="fw-bold text-success">${{ sale.total_amount|floatformat:2 }}</td>
+                        <td class="small text-muted">{{ sale.booked_at|date:"M d, Y h:i A" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No sales recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

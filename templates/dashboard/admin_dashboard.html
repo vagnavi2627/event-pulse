@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Platform Admin - EventPulse{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-4" style="background: var(--gradient-dark)!important;">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <span class="badge bg-primary text-white fw-bold px-3 py-1 rounded-pill mb-1">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Admin Command Center
+                </span>
+                <h1 class="h3 fw-bold mb-0">Platform Administration</h1>
+                <p class="text-white-50 small mb-0">System-wide monitoring, event moderation, user roles, and category governance</p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports_analytics' %}" class="btn btn-glass btn-sm">
+                    <i class="bi bi-graph-up me-1"></i> Global Analytics
+                </a>
+                <a href="{% url 'export_sales_csv' %}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-download me-1"></i> Export Platform CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- PLATFORM KPI STATS -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-title">Total Users</div>
+                    <div class="kpi-value text-primary">{{ total_users_count }}</div>
+                    <div class="kpi-trend text-muted">Registered platform members</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-blue">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-title">Organizers</div>
+                    <div class="kpi-value text-warning">{{ total_organizers_count }}</div>
+                    <div class="kpi-trend text-muted">Active event hosts</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-amber">
+                    <i class="bi bi-megaphone-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-title">Total Events</div>
+                    <div class="kpi-value text-purple" style="color:#7c3aed;">{{ total_events_count }}</div>
+                    <div class="kpi-trend text-muted">Hosted across all categories</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-purple">
+                    <i class="bi bi-calendar2-range-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-title">Platform Volume</div>
+                    <div class="kpi-value text-success">${{ platform_revenue|floatformat:2 }}</div>
+                    <div class="kpi-trend text-success"><i class="bi bi-shield-check"></i> Processed volume</div>
+                </div>
+                <div class="kpi-icon-box kpi-icon-green">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <ul class="nav nav-pills mb-4 bg-white p-2 rounded-3 border shadow-sm" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold small" id="events-tab" data-bs-toggle="pill" data-bs-target="#events" type="button" role="tab">
+                <i class="bi bi-calendar-event-fill me-1"></i> Event Moderation ({{ all_events.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold small" id="users-tab" data-bs-toggle="pill" data-bs-target="#users" type="button" role="tab">
+                <i class="bi bi-people-fill me-1"></i> User Roles & Access
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold small" id="categories-tab" data-bs-toggle="pill" data-bs-target="#categories" type="button" role="tab">
+                <i class="bi bi-grid-fill me-1"></i> Categories & Taxonomies
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="adminTabsContent">
+        <!-- TAB 1: EVENT MODERATION -->
+        <div class="tab-pane fade show active" id="events" role="tabpanel">
+            <div class="custom-table-card">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">All Platform Events</h5>
+                    <span class="small text-muted">Feature, unpublish, or edit any listing</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table custom-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Organizer</th>
+                                <th>Category</th>
+                                <th>Start Date</th>
+                                <th>Status</th>
+                                <th>Featured</th>
+                                <th class="text-end">Moderation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ev in all_events %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="{{ ev.display_banner }}" alt="{{ ev.title }}" class="rounded-2 border" width="46" height="34" style="object-fit:cover;">
+                                        <div class="fw-bold text-dark">{{ ev.title }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small fw-semibold">{{ ev.organizer.username }}</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">{{ ev.organizer.email }}</div>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{ ev.category.name|default:"General" }}</span></td>
+                                <td class="small">{{ ev.start_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge badge-status {{ ev.status }}">{{ ev.status|capfirst }}</span>
+                                </td>
+                                <td>
+                                    {% if ev.is_featured %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i> Yes</span>
+                                    {% else %}
+                                    <span class="text-muted small">No</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a href="{% url 'admin_toggle_event_status' ev.id %}?action=toggle_featured" class="btn btn-sm btn-outline-warning" title="Toggle Featured">
+                                            <i class="bi bi-star"></i>
+                                        </a>
+                                        <a href="{% url 'admin_toggle_event_status' ev.id %}?action=toggle_status" class="btn btn-sm btn-outline-secondary" title="Toggle Draft/Published">
+                                            <i class="bi bi-toggles"></i>
+                                        </a>
+                                        <a href="{% url 'edit_event' ev.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'delete_event' ev.id %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="7" class="text-center py-4 text-muted">No events in database.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: USER ROLES & ACCESS -->
+        <div class="tab-pane fade" id="users" role="tabpanel">
+            <div class="custom-table-card">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Registered Users & Role Assignment</h5>
+                    <span class="small text-muted">Promote users to organizer or platform admin</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table custom-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                                <th>Update Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in all_users %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="{{ u.profile.display_avatar }}" alt="{{ u.username }}" class="rounded-circle border" width="34" height="34" style="object-fit:cover;">
+                                        <div>
+                                            <div class="fw-bold text-dark">{{ u.get_full_name|default:u.username }}</div>
+                                            <div class="small text-muted">@{{ u.username }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="small">{{ u.email }}</td>
+                                <td>
+                                    <span class="badge {% if u.profile.role == 'admin' %}bg-primary{% elif u.profile.role == 'organizer' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ u.profile.get_role_display|default:"Attendee" }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ u.date_joined|date:"M d, Y" }}</td>
+                                <td>
+                                    <form action="{% url 'admin_toggle_user_role' u.id %}" method="POST" class="d-flex align-items-center gap-2">
+                                        {% csrf_token %}
+                                        <select name="new_role" class="form-select form-select-sm" style="width: 140px;">
+                                            <option value="attendee" {% if u.profile.role == 'attendee' %}selected{% endif %}>Attendee</option>
+                                            <option value="organizer" {% if u.profile.role == 'organizer' %}selected{% endif %}>Organizer</option>
+                                            <option value="admin" {% if u.profile.role == 'admin' %}selected{% endif %}>Admin</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CATEGORY GOVERNANCE -->
+        <div class="tab-pane fade" id="categories" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="custom-table-card">
+                        <div class="p-3 border-bottom">
+                            <h5 class="fw-bold mb-0">Active Categories</h5>
+                        </div>
+                        <table class="table custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Icon</th>
+                                    <th>Events</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in categories %}
+                                <tr>
+                                    <td class="fw-bold">{{ cat.name }}</td>
+                                    <td><i class="bi {{ cat.icon }} text-primary fs-5"></i> <code class="small text-muted ms-1">{{ cat.icon }}</code></td>
+                                    <td><span class="badge bg-purple px-2 py-1" style="background:#7c3aed;">{{ cat.total_events }} events</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-sm rounded-4 p-4">
+                        <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-plus-circle me-1"></i> Add New Category</h5>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="add_category" value="1">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Category Name</label>
+                                {{ category_form.name }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Bootstrap Icon Class (e.g. bi-camera-reels)</label>
+                                {{ category_form.icon }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Description</label>
+                                {{ category_form.description }}
+                            </div>
+                            <button type="submit" class="btn btn-gradient-primary w-100 fw-bold">
+                                Create Category
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Attendees: {{ event.title }} - EventPulse{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-4 mb-4" style="background: var(--gradient-dark)!important;">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small text-white-50 mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'organizer_dashboard' %}" class="text-white-50">Organizer Hub</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Attendee Roster</li>
+            </ol>
+        </nav>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+            <div>
+                <h1 class="h3 fw-bold mb-1">{{ event.title }}</h1>
+                <div class="small text-white-50">
+                    <i class="bi bi-calendar3 me-1"></i> {{ event.start_date|date:"M d, Y" }} &bull; {{ event.venue_name|default:"Online" }}
+                </div>
+            </div>
+            <a href="{% url 'export_attendees_csv' event.id %}" class="btn btn-gradient-primary btn-sm">
+                <i class="bi bi-download me-1"></i> Export Attendees CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <!-- ATTENDEES TABLE -->
+    <div class="custom-table-card">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i> Registered Attendees ({{ bookings.count }})</h5>
+            <input type="text" id="attendeeSearch" class="form-control form-control-sm" placeholder="Filter attendees..." style="max-width: 250px;">
+        </div>
+
+        <div class="table-responsive">
+            <table class="table custom-table align-middle" id="attendeesTable">
+                <thead>
+                    <tr>
+                        <th>Booking Ref</th>
+                        <th>Attendee Name</th>
+                        <th>Email & Phone</th>
+                        <th>Ticket Tier</th>
+                        <th>Qty</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date Booked</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bookings %}
+                    <tr>
+                        <td class="font-monospace fw-bold text-primary">{{ b.booking_reference }}</td>
+                        <td class="fw-bold text-dark">{{ b.attendee_name }}</td>
+                        <td>
+                            <div>{{ b.attendee_email }}</div>
+                            <div class="small text-muted">{{ b.attendee_phone|default:"-" }}</div>
+                        </td>
+                        <td>
+                            {% with item=b.items.first %}
+                            <span class="badge bg-purple-subtle text-purple" style="background:#ede9fe; color:#7c3aed;">
+                                {{ item.ticket_tier.name }}
+                            </span>
+                            {% endwith %}
+                        </td>
+                        <td>{{ b.total_tickets }}</td>
+                        <td class="fw-bold text-success">${{ b.total_amount|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge badge-status {{ b.status }}">{{ b.status|capfirst }}</span>
+                        </td>
+                        <td class="small text-muted">{{ b.booked_at|date:"M d, Y h:i A" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            No attendees registered for this event yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('attendeeSearch')?.addEventListener('keyup', function() {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#attendeesTable tbody tr');
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

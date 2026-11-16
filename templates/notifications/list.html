@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications - EventPulse{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-4 mb-4" style="background: var(--gradient-dark)!important;">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+            <div>
+                <h1 class="h3 fw-bold mb-1"><i class="bi bi-bell-fill text-warning me-2"></i> Notifications Center</h1>
+                <p class="text-white-50 small mb-0">Stay updated on your ticket confirmations, event reminders, and announcements</p>
+            </div>
+            <a href="{% url 'mark_all_notifications_read' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-check2-all me-1"></i> Mark All as Read
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Filter Pills -->
+            <div class="d-flex gap-2 mb-3">
+                <a href="{% url 'notifications_list' %}" class="btn btn-sm {% if filter_type != 'unread' %}btn-gradient-primary{% else %}btn-outline-secondary{% endif %}">
+                    All Notifications
+                </a>
+                <a href="{% url 'notifications_list' %}?filter=unread" class="btn btn-sm {% if filter_type == 'unread' %}btn-gradient-primary{% else %}btn-outline-secondary{% endif %}">
+                    Unread Only
+                </a>
+            </div>
+
+            <!-- Notification List -->
+            <div class="d-flex flex-column gap-2">
+                {% for notif in notifications %}
+                <a href="{% url 'mark_single_notification_read' notif.id %}" class="text-decoration-none">
+                    <div class="notification-card {% if not notif.is_read %}unread{% endif %}">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center text-white" style="width: 44px; height: 44px; flex-shrink: 0; background: {% if notif.notification_type == 'booking_confirmed' %}#10b981{% elif notif.notification_type == 'ticket_sold' %}#7c3aed{% else %}#2563eb{% endif %};">
+                            <i class="bi {% if notif.notification_type == 'booking_confirmed' %}bi-ticket-check-fill{% elif notif.notification_type == 'ticket_sold' %}bi-cash-coin{% else %}bi-bell-fill{% endif %} fs-5"></i>
+                        </div>
+
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold text-dark mb-1">{{ notif.title }}</h6>
+                                <span class="small text-muted" style="font-size:0.75rem;">{{ notif.created_at|timesince }} ago</span>
+                            </div>
+                            <p class="text-secondary small mb-0">{{ notif.message }}</p>
+                        </div>
+
+                        {% if not notif.is_read %}
+                        <span class="rounded-circle bg-primary" style="width: 10px; height: 10px; flex-shrink: 0;" title="Unread"></span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% empty %}
+                <div class="text-center py-5 bg-white rounded-4 border shadow-sm">
+                    <i class="bi bi-bell-slash text-muted display-4 mb-3 d-block"></i>
+                    <h5 class="fw-bold">No Notifications Found</h5>
+                    <p class="text-muted small">You're all caught up! New updates regarding your tickets and events will appear here.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
